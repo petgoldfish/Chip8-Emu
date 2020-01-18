@@ -40,14 +40,36 @@ namespace Chip8Emulator
 				case 0x0000:
 					if (opcode == 0x00E0) // Clear Screen
 					{
-						for(int i = 0; i < Screen.Length; i++) Screen[i] = 0;
+						for (int i = 0; i < Screen.Length; i++) Screen[i] = 0;
 					}
 					else if (opcode == 0x00EE) // Return from subroutine
 					{
 						PC = Stack[SP--];
 					}
 					break;
-					
+				case 0x1000:
+					PC = (ushort)(opcode & 0x0fff); // 1NNN - Jump - Set PC to NNN
+					break;
+				case 0x2000:
+					Stack[SP++] = PC;
+					PC = (ushort)(opcode & 0x0fff); // 2NNN - Call subroutine - Stack current PC and jump
+					break;
+				case 0x3000:
+					if (V[(opcode & 0x0f00) >> 8] == (opcode & 0x00ff)) PC += 2; // 3XNN - Skip next instruction if VX == NN
+					break;
+				case 0x4000:
+					if (V[(opcode & 0x0f00) >> 8] != (opcode & 0x00ff)) PC += 2; // 4XNN - Skip next instruction if VX != NN
+					break;
+				case 0x5000:
+					if (V[(opcode & 0x0f00) >> 8] == V[(opcode & 0x00f0) >> 4]) PC += 2; PC += 2; // 5XY0 - Skip next instruction if VX == VY
+					break;
+				case 0x6000:
+					V[(opcode & 0x0f00) >> 8] = (byte)(opcode & 0x00ff); // 6XNN - Set VX to NN
+					break;
+				case 0x7000:
+					V[(opcode & 0x0f00) >> 8] += (byte)(opcode & 0x00ff); // 6XNN - Add NN to VX
+					break;
+				
 			}
 		}
 	}
