@@ -7,12 +7,22 @@ namespace Chip8Emulator
 	{
 		static void Main(string[] args)
 		{
+			CPU cpu = new CPU();
+
 			using (BinaryReader reader = new BinaryReader(new FileStream("roms\\test.ch8", FileMode.Open)))
 			{
 				while (reader.BaseStream.Position < reader.BaseStream.Length)
 				{
 					ushort opcode = (ushort)((reader.ReadByte() << 8) | reader.ReadByte());
-					Console.WriteLine($"{opcode.ToString("X4")}");
+
+					try
+					{
+						cpu.executeOpcode(opcode);
+					}
+					catch (Exception e)
+					{
+						Console.WriteLine(e.Message);
+					}
 				}
 
 				Console.ReadKey();
@@ -106,8 +116,12 @@ namespace Chip8Emulator
 							V[0xf] = (byte)((V[X] & 0x80) == 0x80 ? 1 : 0); // 8XY6 - Left shift VX, Set VF to MSB
 							V[X] = (byte)(V[X] << 1);
 							break;
+						default:
+							throw new Exception($"Unsupported opcode: {opcode.ToString("X4")}");
 					}
 					break;
+				default:
+					throw new Exception($"Unsupported opcode: {opcode.ToString("X4")}");
 			}
 		}
 	}
