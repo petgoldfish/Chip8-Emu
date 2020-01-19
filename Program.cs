@@ -69,7 +69,45 @@ namespace Chip8Emulator
 				case 0x7000:
 					V[(opcode & 0x0f00) >> 8] += (byte)(opcode & 0x00ff); // 6XNN - Add NN to VX
 					break;
-				
+				case 0x8000: // 8XYN
+					int X = (opcode & 0x0f00) >> 8; // Get X
+					int Y = (opcode & 0x00f0) >> 4; // Get Y
+					switch (opcode & 0x000f)
+					{
+						case 0:
+							V[X] = V[Y]; // 8XY0 - Set VX = VY
+							break;
+						case 1:
+							V[X] = (byte)(V[X] | V[Y]); // 8XY1 - Set VX = VX | VY
+							break;
+						case 2:
+							V[X] = (byte)(V[X] & V[Y]); // 8XY2 - Set VX = VX & VY
+							break;
+						case 3:
+							V[X] = (byte)(V[X] ^ V[Y]); // 8XY3 - Set VX = VX ^ VY
+							break;
+						case 4:
+							V[0xf] = (byte)(V[X] + V[Y] > 255 ? 1 : 0); // 8XY4 - Set VX = VX + VY, Set VF to carry
+							V[X] = (byte)((V[X] + V[Y]) & 0x00ff);
+							break;
+						case 5:
+							V[0xf] = (byte)(V[X] > V[Y] ? 1 : 0); // 8XY5 - Set VX = VX - VY, Set VF to borrow
+							V[X] = (byte)((V[X] - V[Y]) & 0x00ff);
+							break;
+						case 6:
+							V[0xf] = (byte)(V[X] & 0x0001); // 8XY6 - Right shift VX, Set VF to LSB
+							V[X] = (byte)(V[X] >> 1);
+							break;
+						case 7:
+							V[0xf] = (byte)(V[Y] > V[X] ? 1 : 0); // 8XY7 - Set VX = VY - VX, Set VF to borrow
+							V[X] = (byte)((V[Y] - V[X]) & 0x00ff);
+							break;
+						case 0xe:
+							V[0xf] = (byte)((V[X] & 0x80) == 0x80 ? 1 : 0); // 8XY6 - Left shift VX, Set VF to MSB
+							V[X] = (byte)(V[X] << 1);
+							break;
+					}
+					break;
 			}
 		}
 	}
