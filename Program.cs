@@ -43,6 +43,8 @@ namespace Chip8Emulator
 		public byte KeyBoard;                     // Keyboard Input
 		public byte[] Screen = new byte[64 * 32]; // Screen
 
+		private Random rng = new Random(Environment.TickCount); // Random number generator for CXKK
+
 		public void executeOpcode(ushort opcode)
 		{
 			switch (opcode & 0xF000)
@@ -119,6 +121,18 @@ namespace Chip8Emulator
 						default:
 							throw new Exception($"Unsupported opcode: {opcode.ToString("X4")}");
 					}
+					break;
+				case 0x9000:
+					if (V[(opcode & 0x0f00) >> 8] != V[(opcode & 0x00f0) >> 4]) PC += 2; PC += 2; // 9XY0 - Skip next instruction if VX != VY
+					break;
+				case 0xA000:
+					I = (ushort)(opcode & 0x0fff); // ANNN - Set I to NNN
+					break;
+				case 0xB000:
+					PC = (ushort)(V[0] + (opcode & 0x0fff)); // BNNN - Set PC = V0 + NNN
+					break;
+				case 0xC000:
+					V[(opcode & 0x0f00) >> 8] = (byte)(rng.Next(0, 255) & (opcode & 0x00ff)); // CXKK - Set VX = Rand(0, 255) & KK
 					break;
 				default:
 					throw new Exception($"Unsupported opcode: {opcode.ToString("X4")}");
