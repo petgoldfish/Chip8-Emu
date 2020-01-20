@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Chip8Emulator
 {
@@ -11,21 +13,22 @@ namespace Chip8Emulator
 
 			using (BinaryReader reader = new BinaryReader(new FileStream("roms\\test.ch8", FileMode.Open)))
 			{
+				List<byte> program = new List<byte>();
+
 				while (reader.BaseStream.Position < reader.BaseStream.Length)
 				{
-					ushort opcode = (ushort)((reader.ReadByte() << 8) | reader.ReadByte());
-
-					try
-					{
-						cpu.executeOpcode(opcode);
-					}
-					catch (Exception e)
-					{
-						Console.WriteLine(e.Message);
-					}
+					program.Add(reader.ReadByte());
 				}
 
-				Console.ReadKey();
+				cpu.LoadProgram(program.ToArray());
+
+			}
+			Console.Clear(); // Clear "Screen"
+			Console.CursorVisible = false; // Hide Cursor
+			while (true)
+			{
+				cpu.ExecuteOpcode();
+				cpu.Draw();
 			}
 		}
 	}
@@ -47,8 +50,68 @@ namespace Chip8Emulator
 
 		private Random rng = new Random(Environment.TickCount); // Random number generator for CXKK
 
-		public void executeOpcode(ushort opcode)
+		public void LoadProgram(byte[] program)
 		{
+			InitializeFontSet();
+			for (int i = 0; i < program.Length; i++)
+			{
+				Memory[512 + i] = program[i];
+			}
+			PC = 512;
+		}
+
+		public void Draw()
+		{
+			Console.SetCursorPosition(0, 0);
+			for (int y = 0; y < 32; y++)
+			{
+				StringBuilder line = new StringBuilder("");
+				for (int x = 0; x < 64; x++)
+				{
+					if (Screen[x + y * 64] == 0)
+						line.Append(" ");
+					else
+						line.Append("█");
+				}
+				Console.WriteLine(line.ToString());
+			}
+		}
+
+		private void InitializeFontSet()
+		{
+			byte[] characters = new byte[] {
+				0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+				0x20, 0x60, 0x20, 0x20, 0x70, // 1
+				0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+				0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+				0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+				0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+				0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+				0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+				0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+				0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+				0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+				0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+				0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+				0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+				0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+				0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+			};
+			Array.Copy(characters, Memory, characters.Length);
+		}
+
+		public void ExecuteOpcode()
+		{
+			ushort opcode = (ushort)((Memory[PC] << 8) | Memory[PC + 1]);
+
+			if (WaitingForKeyPress)
+			{
+				V[(opcode & 0x0f00) >> 8] = KeyBoard;
+				return;
+			}
+
+			PC += 2;
+
 			switch (opcode & 0xF000)
 			{
 				case 0x0000:
@@ -117,7 +180,7 @@ namespace Chip8Emulator
 							V[X] = (byte)((V[Y] - V[X]) & 0x00ff);
 							break;
 						case 0xe:
-							V[0xf] = (byte)((V[X] & 0x80) == 0x80 ? 1 : 0); // 8XY6 - Left shift VX, Set VF to MSB
+							V[0xf] = (byte)((V[X] & 0x80) == 0x80 ? 1 : 0); // 8XYE - Left shift VX, Set VF to MSB
 							V[X] = (byte)(V[X] << 1);
 							break;
 						default:
@@ -146,7 +209,7 @@ namespace Chip8Emulator
 
 					for (int i = 0; i < dn; i++)
 					{
-						byte location = Memory[i];
+						byte location = Memory[I + i];
 						for (int j = 0; j < 8; j++)
 						{
 							byte pixel = (byte)((location >> (7 - j)) & 0x1);
