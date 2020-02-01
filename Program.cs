@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
@@ -12,7 +12,7 @@ namespace Chip8Emulator
 		{
 			CPU cpu = new CPU();
 
-			using (BinaryReader reader = new BinaryReader(new FileStream("roms\\test.ch8", FileMode.Open)))
+			using (BinaryReader reader = new BinaryReader(new FileStream("roms\\games\\TETRIS", FileMode.Open)))
 			{
 				List<byte> program = new List<byte>();
 
@@ -226,6 +226,7 @@ namespace Chip8Emulator
 						{
 							byte pixel = (byte)((location >> (7 - j)) & 0x1);
 							int index = dx + j + (dy + i) * 64;
+							if(index > 2047) continue;
 							if (pixel == 1 && Screen[index] == 1) V[0xf] = 1;
 							Screen[index] = (byte)(Screen[index] ^ pixel);
 						}
