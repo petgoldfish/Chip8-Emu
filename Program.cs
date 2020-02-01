@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
@@ -200,7 +200,7 @@ namespace Chip8Emulator
 					}
 					break;
 				case 0x9000:
-					if (V[(opcode & 0x0f00) >> 8] != V[(opcode & 0x00f0) >> 4]) PC += 2; PC += 2; // 9XY0 - Skip next instruction if VX != VY
+					if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4]) PC += 2; // 9XY0 - Skip next instruction if VX != VY
 					break;
 				case 0xA000:
 					I = (ushort)(opcode & 0x0fff); // ANNN - Set I to NNN
