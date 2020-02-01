@@ -39,7 +39,7 @@ namespace Chip8Emulator
 		public byte[] V = new byte[16];           // Registers V0 to VF
 		public ushort I;                          // Address Register
 		public ushort PC;                         // Program Counter
-		public ushort[] Stack = new ushort[24];   // Stack
+		public Stack<ushort> Stack = new Stack<ushort>();   // Stack
 		public byte SP = 0;                       // Stack Pointer 
 		public byte DelayTimer;                   // Delay Timer
 		public byte SoundTimer;                   // Sound Timer
@@ -133,14 +133,14 @@ namespace Chip8Emulator
 					}
 					else if (opcode == 0x00EE) // Return from subroutine
 					{
-						PC = Stack[SP--];
+						PC = Stack.Pop();
 					}
 					break;
 				case 0x1000:
 					PC = (ushort)(opcode & 0x0fff); // 1NNN - Jump - Set PC to NNN
 					break;
 				case 0x2000:
-					Stack[SP++] = PC;
+					Stack.Push(PC);
 					PC = (ushort)(opcode & 0x0fff); // 2NNN - Call subroutine - Stack current PC and jump
 					break;
 				case 0x3000:
