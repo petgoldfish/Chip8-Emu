@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
@@ -104,21 +104,21 @@ namespace Chip8Emulator
 
 		public void ExecuteOpcode()
 		{
-			if(!stopWatch.IsRunning) stopWatch.Start(); // Start stopwatch if not running
+			if (!stopWatch.IsRunning) stopWatch.Start(); // Start stopwatch if not running
 
-			if(stopWatch.ElapsedMilliseconds > 16.666) // Update at 60 Hz
+			if (stopWatch.ElapsedMilliseconds > 16.666) // Update at 60 Hz
 			{
-				if(SoundTimer > 0) SoundTimer--;
-				if(DelayTimer > 0) DelayTimer--;
+				if (SoundTimer > 0) SoundTimer--;
+				if (DelayTimer > 0) DelayTimer--;
 
 				stopWatch.Restart();
 			}
-			
+
 			ushort opcode = (ushort)((Memory[PC] << 8) | Memory[PC + 1]);
 
 			if (WaitingForKeyPress)
 			{
-				V[(opcode & 0x0f00) >> 8] = KeyBoard;
+				V[(opcode & 0x0F00) >> 8] = KeyBoard;
 				return;
 			}
 
@@ -135,33 +135,35 @@ namespace Chip8Emulator
 					{
 						PC = Stack.Pop();
 					}
+					else
+						throw new Exception($"Unsupported opcode: {opcode.ToString("X4")}");
 					break;
 				case 0x1000:
-					PC = (ushort)(opcode & 0x0fff); // 1NNN - Jump - Set PC to NNN
+					PC = (ushort)(opcode & 0x0FFF); // 1NNN - Jump - Set PC to NNN
 					break;
 				case 0x2000:
 					Stack.Push(PC);
-					PC = (ushort)(opcode & 0x0fff); // 2NNN - Call subroutine - Stack current PC and jump
+					PC = (ushort)(opcode & 0x0FFF); // 2NNN - Call subroutine - Stack current PC and jump
 					break;
 				case 0x3000:
-					if (V[(opcode & 0x0f00) >> 8] == (opcode & 0x00ff)) PC += 2; // 3XNN - Skip next instruction if VX == NN
+					if (V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)) PC += 2; // 3XNN - Skip next instruction if VX == NN
 					break;
 				case 0x4000:
-					if (V[(opcode & 0x0f00) >> 8] != (opcode & 0x00ff)) PC += 2; // 4XNN - Skip next instruction if VX != NN
+					if (V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) PC += 2; // 4XNN - Skip next instruction if VX != NN
 					break;
 				case 0x5000:
-					if (V[(opcode & 0x0f00) >> 8] == V[(opcode & 0x00f0) >> 4]) PC += 2; PC += 2; // 5XY0 - Skip next instruction if VX == VY
+					if (V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4]) PC += 2; PC += 2; // 5XY0 - Skip next instruction if VX == VY
 					break;
 				case 0x6000:
-					V[(opcode & 0x0f00) >> 8] = (byte)(opcode & 0x00ff); // 6XNN - Set VX to NN
+					V[(opcode & 0x0F00) >> 8] = (byte)(opcode & 0x00FF); // 6XNN - Set VX to NN
 					break;
 				case 0x7000:
-					V[(opcode & 0x0f00) >> 8] += (byte)(opcode & 0x00ff); // 6XNN - Add NN to VX
+					V[(opcode & 0x0F00) >> 8] += (byte)(opcode & 0x00FF); // 6XNN - Add NN to VX
 					break;
 				case 0x8000: // 8XYN
-					int X = (opcode & 0x0f00) >> 8; // Get X
-					int Y = (opcode & 0x00f0) >> 4; // Get Y
-					switch (opcode & 0x000f)
+					int X = (opcode & 0x0F00) >> 8; // Get X
+					int Y = (opcode & 0x00F0) >> 4; // Get Y
+					switch (opcode & 0x000F)
 					{
 						case 0:
 							V[X] = V[Y]; // 8XY0 - Set VX = VY
@@ -176,23 +178,23 @@ namespace Chip8Emulator
 							V[X] = (byte)(V[X] ^ V[Y]); // 8XY3 - Set VX = VX ^ VY
 							break;
 						case 4:
-							V[0xf] = (byte)(V[X] + V[Y] > 255 ? 1 : 0); // 8XY4 - Set VX = VX + VY, Set VF to carry
-							V[X] = (byte)((V[X] + V[Y]) & 0x00ff);
+							V[0xF] = (byte)(V[X] + V[Y] > 255 ? 1 : 0); // 8XY4 - Set VX = VX + VY, Set VF to carry
+							V[X] = (byte)((V[X] + V[Y]) & 0x00FF);
 							break;
 						case 5:
-							V[0xf] = (byte)(V[X] > V[Y] ? 1 : 0); // 8XY5 - Set VX = VX - VY, Set VF to borrow
-							V[X] = (byte)((V[X] - V[Y]) & 0x00ff);
+							V[0xF] = (byte)(V[X] > V[Y] ? 1 : 0); // 8XY5 - Set VX = VX - VY, Set VF to borrow
+							V[X] = (byte)((V[X] - V[Y]) & 0x00FF);
 							break;
 						case 6:
-							V[0xf] = (byte)(V[X] & 0x0001); // 8XY6 - Right shift VX, Set VF to LSB
+							V[0xF] = (byte)(V[X] & 0x0001); // 8XY6 - Right shift VX, Set VF to LSB
 							V[X] = (byte)(V[X] >> 1);
 							break;
 						case 7:
-							V[0xf] = (byte)(V[Y] > V[X] ? 1 : 0); // 8XY7 - Set VX = VY - VX, Set VF to borrow
-							V[X] = (byte)((V[Y] - V[X]) & 0x00ff);
+							V[0xF] = (byte)(V[Y] > V[X] ? 1 : 0); // 8XY7 - Set VX = VY - VX, Set VF to borrow
+							V[X] = (byte)((V[Y] - V[X]) & 0x00FF);
 							break;
-						case 0xe:
-							V[0xf] = (byte)((V[X] & 0x80) == 0x80 ? 1 : 0); // 8XYE - Left shift VX, Set VF to MSB
+						case 0xE:
+							V[0xF] = (byte)(((V[X] & 0x80) == 0x80) ? 1 : 0); // 8XYE - Left shift VX, Set VF to MSB
 							V[X] = (byte)(V[X] << 1);
 							break;
 						default:
@@ -203,21 +205,21 @@ namespace Chip8Emulator
 					if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4]) PC += 2; // 9XY0 - Skip next instruction if VX != VY
 					break;
 				case 0xA000:
-					I = (ushort)(opcode & 0x0fff); // ANNN - Set I to NNN
+					I = (ushort)(opcode & 0x0FFF); // ANNN - Set I to NNN
 					break;
 				case 0xB000:
-					PC = (ushort)(V[0] + (opcode & 0x0fff)); // BNNN - Set PC = V0 + NNN
+					PC = (ushort)(V[0] + (opcode & 0x0FFF)); // BNNN - Set PC = V0 + NNN
 					break;
 				case 0xC000:
-					V[(opcode & 0x0f00) >> 8] = (byte)(rng.Next(0, 255) & (opcode & 0x00ff)); // CXKK - Set VX = Rand(0, 255) & KK
+					V[(opcode & 0x0F00) >> 8] = (byte)(rng.Next(0, 255) & (opcode & 0x00FF)); // CXKK - Set VX = Rand(0, 255) & KK
 					break;
 				case 0xD000:
 					// DXYN - Draw n byte sprite at location X, Y starting at I
-					int dx = V[(opcode & 0x0f00) >> 8];
-					int dy = V[(opcode & 0x00f0) >> 4];
-					int dn = opcode & 0x000f;
+					int dx = V[(opcode & 0x0F00) >> 8];
+					int dy = V[(opcode & 0x00F0) >> 4];
+					int dn = opcode & 0x000F;
 
-					V[0xf] = 0;
+					V[0xF] = 0;
 
 					for (int i = 0; i < dn; i++)
 					{
@@ -226,8 +228,8 @@ namespace Chip8Emulator
 						{
 							byte pixel = (byte)((location >> (7 - j)) & 0x1);
 							int index = dx + j + (dy + i) * 64;
-							if(index > 2047) continue;
-							if (pixel == 1 && Screen[index] == 1) V[0xf] = 1;
+							if (index > 2047) continue;
+							if (pixel == 1 && Screen[index] == 1) V[0xF] = 1;
 							Screen[index] = (byte)(Screen[index] ^ pixel);
 						}
 					}
@@ -235,27 +237,27 @@ namespace Chip8Emulator
 					Draw();
 					break;
 				case 0xE000:
-					if ((opcode & 0x00ff) == 0x9e)
+					if ((opcode & 0x00FF) == 0x9E)
 					{
 						// EX9E - Skip next instruction if key pressed corresponds to VX
-						if (((KeyBoard >> V[(opcode & 0x0f00) >> 8]) & 0x01) == 0x01) PC += 2;
+						if (((KeyBoard >> V[(opcode & 0x0F00) >> 8]) & 0x01) == 0x01) PC += 2;
 						break;
 					}
-					else if ((opcode & 0x00ff) == 0xa1)
+					else if ((opcode & 0x00FF) == 0xA1)
 					{
 						// EXA1 - Skip next instruction if key pressed does not correspond to VX
-						if (((KeyBoard >> V[(opcode & 0x0f00) >> 8]) & 0x01) == 0x01) PC += 2;
+						if (((KeyBoard >> V[(opcode & 0x0F00) >> 8]) & 0x01) == 0x01) PC += 2;
 						break;
 					}
 					else throw new Exception($"Unsupported opcode: {opcode.ToString("X4")}");
 				case 0xF000:
-					int x = (opcode & 0x0f00) >> 8; // Get X
-					switch (opcode & 0x00ff)
+					int x = (opcode & 0x0F00) >> 8; // Get X
+					switch (opcode & 0x00FF)
 					{
 						case 0x07:
 							V[x] = DelayTimer; // FX07 - Set VX = Delay Timer
 							break;
-						case 0x0a:
+						case 0x0A:
 							WaitingForKeyPress = true; // FX0A - Wait for key press and set VX = Key pressed
 							PC -= 2;
 							break;
