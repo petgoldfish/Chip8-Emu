@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
 
 namespace Chip8Emulator
 {
@@ -46,6 +47,8 @@ namespace Chip8Emulator
 		public byte[] Screen = new byte[64 * 32]; // Screen
 
 		public bool WaitingForKeyPress = false;
+
+		private Stopwatch stopWatch = new Stopwatch();
 
 		private Random rng = new Random(Environment.TickCount); // Random number generator for CXKK
 
@@ -101,6 +104,16 @@ namespace Chip8Emulator
 
 		public void ExecuteOpcode()
 		{
+			if(!stopWatch.IsRunning) stopWatch.Start(); // Start stopwatch if not running
+
+			if(stopWatch.ElapsedMilliseconds > 16.666) // Update at 60 Hz
+			{
+				if(SoundTimer > 0) SoundTimer--;
+				if(DelayTimer > 0) DelayTimer--;
+
+				stopWatch.Restart();
+			}
+			
 			ushort opcode = (ushort)((Memory[PC] << 8) | Memory[PC + 1]);
 
 			if (WaitingForKeyPress)
