@@ -28,7 +28,6 @@ namespace Chip8Emulator
 			while (true)
 			{
 				cpu.ExecuteOpcode();
-				cpu.Draw();
 			}
 		}
 	}
@@ -218,6 +217,8 @@ namespace Chip8Emulator
 							Screen[index] = (byte)(Screen[index] ^ pixel);
 						}
 					}
+
+					Draw();
 					break;
 				case 0xE000:
 					if ((opcode & 0x00ff) == 0x9e)
